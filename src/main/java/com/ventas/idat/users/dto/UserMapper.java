@@ -1,11 +1,12 @@
 package com.ventas.idat.users.dto;
 
-import org.springframework.stereotype.Component;
-
 import com.ventas.idat.users.model.User;
 
-@Component
 public class UserMapper {
+
+    private UserMapper() {
+        throw new AssertionError("Utility class should not be instantiated");
+    }
 
     public static UserDTO toDTO(User user) {
         return UserDTO.builder()

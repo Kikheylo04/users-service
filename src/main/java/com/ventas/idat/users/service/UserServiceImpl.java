@@ -2,9 +2,7 @@ package com.ventas.idat.users.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,17 +23,20 @@ import com.ventas.idat.users.repository.UserRepository;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JWTUtil jwtUtil;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JWTUtil jwtUtil;
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           AuthenticationManager authenticationManager,
+                           JWTUtil jwtUtil) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+    }
 
     @Override
     public Optional<User> findByUsername(String username) {
@@ -51,19 +52,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public ApiResponse<List<UserDTO>> getAll() {
         List<UserDTO> usersDTO = userRepository.findAll()
-                                    .stream()
-                                    .map(UserMapper::toDTO)
-                                    .collect(Collectors.toList());    
+                .stream()
+                .map(UserMapper::toDTO)
+                .toList();
+
         return ApiResponse.<List<UserDTO>>builder()
-            .responseCode(HttpStatus.OK.value())
-            .responseMessage("Usuarios obtenidos correctamente")
-            .data(usersDTO).build();
+                .responseCode(HttpStatus.OK.value())
+                .responseMessage("Usuarios obtenidos correctamente")
+                .data(usersDTO)
+                .build();
     }
 
     @Override
     public ApiResponse<String> login(LoginRequest request) {
         try {
-            Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
             UserDetails userDetails = (UserDetails) auth.getPrincipal();
             String token = jwtUtil.generateToken(userDetails.getUsername(), userDetails.getAuthorities());
             return new ApiResponse<>(HttpStatus.OK.value(), "Login Exitoso", token);
@@ -75,20 +79,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public ApiResponse<UserDTO> getUserDetail(String username) {
         Optional<User> user = userRepository.findByUsername(username);
-        if(user.isPresent()){
+        if (user.isPresent()) {
             return ApiResponse.<UserDTO>builder()
-                        .responseCode(HttpStatus.OK.value())
-                        .responseMessage("Usuario encontrado")
-                        .data(UserMapper.toDTO(user.get()))
-                        .build();
+                    .responseCode(HttpStatus.OK.value())
+                    .responseMessage("Usuario encontrado")
+                    .data(UserMapper.toDTO(user.get()))
+                    .build();
         } else {
             return ApiResponse.<UserDTO>builder()
-                        .responseCode(HttpStatus.NOT_FOUND.value())
-                        .responseMessage("Usuario no encontrado")
-                        .data(null)
-                        .build();
+                    .responseCode(HttpStatus.NOT_FOUND.value())
+                    .responseMessage("Usuario no encontrado")
+                    .data(null)
+                    .build();
         }
     }
-
-    
 }

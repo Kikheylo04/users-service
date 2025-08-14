@@ -1,34 +1,28 @@
 package com.ventas.idat.users.controller;
 
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.ventas.idat.users.dto.ApiResponse;
 import com.ventas.idat.users.dto.LoginRequest;
 import com.ventas.idat.users.dto.UserDTO;
 import com.ventas.idat.users.model.User;
 import com.ventas.idat.users.service.UserService;
-
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody User user) {
         return ResponseEntity.ok(userService.register(user));
@@ -39,7 +33,7 @@ public class UserController {
         ApiResponse<String> response = userService.login(request);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
-    
+
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse<UserDTO>> getUserDetailInSession(Authentication auth) {
         ApiResponse<UserDTO> response = userService.getUserDetail(auth.getName());
@@ -57,6 +51,4 @@ public class UserController {
         ApiResponse<List<UserDTO>> response = userService.getAll();
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
-    
-
 }
